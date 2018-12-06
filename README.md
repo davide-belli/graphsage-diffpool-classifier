@@ -11,15 +11,15 @@
 
 [Graph U-net](https://openreview.net/pdf?id=HJePRoAct7)
 
-### Initial Experiments on Datasets
-# 30/11/2018
+# Initial Experiments on Datasets
+### 30/11/2018
 
 - created repository
 - studied COLLAB dataset and computed statistics about graphs
 
 
-### Further experiments on Datasets
-# 30/11/2018
+# Further experiments on Datasets
+### 30/11/2018
 
 - extended analysis on datasets: 
    - COLLAB: Without node features,
