@@ -41,5 +41,6 @@
 - extended analysis on datasets: 
    - COLLAB: Without node features,
    - MUTAG: With node features
+- utils.py: Added function to import graphs dataset and return tensor representation (A, X, labels)
 ---
 
