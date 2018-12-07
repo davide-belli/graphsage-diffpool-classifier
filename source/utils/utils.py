@@ -5,6 +5,7 @@ import pickle
 
 import numpy as np
 import torch
+from torch.nn import functional as F
 
 KNOWN_DATASETS = {"../data/mutag.graph"}
 
@@ -37,7 +38,7 @@ class DatasetHelper(object):
         return graphs, labels
     
 
-    def load_dataset(self, ds_name, device="cuda:0", seed=42):
+    def load_dataset(self, ds_name, device="cuda:0", seed=42, normalize=True):
         
         graphs, labels = self.read_file(ds_name)
         
@@ -58,8 +59,8 @@ class DatasetHelper(object):
         valid_idx = shuffled_idx[self.train_size:]
     
         # Generate PyTorch tensors for train
-        a_train = torch.zeros((self.train_size, self.n_nodes, self.n_nodes), dtype=torch.int32, device=device)
-        x_train = torch.zeros((self.train_size, self.n_nodes, self.feature_size), dtype=torch.float64, device=device)
+        a_train = torch.zeros((self.train_size, self.n_nodes, self.n_nodes), dtype=torch.float, device=device)
+        x_train = torch.zeros((self.train_size, self.n_nodes, self.feature_size), dtype=torch.float, device=device)
         labels_train = torch.FloatTensor(self.train_size, device=device)
         for i in range(self.valid_size):
             idx = train_idx[i].item()
@@ -71,8 +72,8 @@ class DatasetHelper(object):
                     x_train[i, j, k] = float(d)
     
         # Generate PyTorch tensors for valid
-        a_valid = torch.zeros((self.valid_size, self.n_nodes, self.n_nodes), dtype=torch.int32, device=device)
-        x_valid = torch.zeros((self.valid_size, self.n_nodes, self.feature_size), dtype=torch.float64, device=device)
+        a_valid = torch.zeros((self.valid_size, self.n_nodes, self.n_nodes), dtype=torch.float, device=device)
+        x_valid = torch.zeros((self.valid_size, self.n_nodes, self.feature_size), dtype=torch.float, device=device)
         labels_valid = torch.FloatTensor(self.valid_size, device=device)
         for i in range(self.valid_size):
             idx = valid_idx[i].item()
@@ -82,6 +83,11 @@ class DatasetHelper(object):
                     a_valid[i, j, k] = 1
                 for k, d in enumerate(graphs[idx][j]['label']):
                     x_valid[i, j, k] = float(d)
+                    
+        if normalize:
+            x_train = F.normalize(x_train, p=2, dim=1)
+            x_valid = F.normalize(x_valid, p=2, dim=1)
+        
     
         self.train = (x_train, a_train, labels_train)
         self.valid = (x_valid, a_valid, labels_valid)

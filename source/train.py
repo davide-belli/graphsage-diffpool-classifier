@@ -16,6 +16,7 @@ from models.graphsage import GraphSAGE
 from utils.utils import DatasetHelper
 
 SEED = 42
+NORMALIZE = False
 
 def main():
     print(ARGS)
@@ -26,13 +27,24 @@ def main():
     torch.manual_seed(SEED)
     if ARGS.device != "cpu":
         torch.cuda.manual_seed(SEED)
+    normalize = NORMALIZE
     
     dataset_helper = DatasetHelper()
-    dataset_helper.load_dataset(ARGS.dataset, device=device, seed=SEED)
-    train, valid = dataset_helper.train, dataset_helper.valid
+    dataset_helper.load_dataset(ARGS.dataset, device=device, seed=SEED, normalize=normalize)
+    (x_train, a_train, labels_train) = dataset_helper.train
+    (x_valid, a_valid, labels_valid) = dataset_helper.valid
+    feature_size = dataset_helper.feature_size
     print("Imported dataset, generated train and validation splits, took: {:.3f}s".format(time.time() - start_time))
     
-    # gcn = GraphSAGE()
+    gcn = GraphSAGE(feature_size, feature_size*2, device=device, normalize=normalize)
+    gcn = gcn.to(device=device)
+    
+    x1 = x_train[0]
+    a1 = a_train[0]
+    t1 = labels_train[0]
+    weights = gcn.linear.weight
+    z1 = gcn(x1, a1)
+    print()
     
     
 
