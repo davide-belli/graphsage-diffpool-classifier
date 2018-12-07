@@ -3,6 +3,7 @@
 data/
 **/.idea
 **/.ipynb_checkpoints
+**/__pycache__
 
 
 ### files
