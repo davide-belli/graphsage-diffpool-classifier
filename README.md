@@ -44,3 +44,12 @@
 - utils.py: Added function to import graphs dataset and return tensor representation (A, X, labels)
 ---
 
+## GraphSAGE and improved dataset loader
+### 07/12/2018
+
+- changed dataset loader to Class framework
+- implemented GraphSAGE layer in PyTorch
+- questions:
+- - In GraphSAGE, how do we work in case of one-dimensional features? 
+ 	e.g. the output will have feature dimensions zero, or shall we increase it? If not, with normalization all the values will be 1, since they are scalars (shall we normalize also the feature in input in this case?). Also, if the weights are initialized as negative all the activations after a relu will be zero after the first forward
+- - What about zero-dimensional ones?
