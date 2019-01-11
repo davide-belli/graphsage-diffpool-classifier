@@ -20,6 +20,7 @@ class DatasetHelper(object):
         self.n_nodes = -1
         self.train_size = -1
         self.valid_size = -1
+        self.onehot = None
 
 
     def read_file(self, ds_name):
@@ -38,14 +39,29 @@ class DatasetHelper(object):
         return graphs, labels
     
 
-    def load_dataset(self, ds_name, device="cuda:0", seed=42, normalize=True):
+    def load_dataset(self, ds_name, device="cuda:0", seed=42, normalize=True, onehot=True):
         
         graphs, labels = self.read_file(ds_name)
         
         # Compute shape dimensions n_graphs, n_nodes, features_size
         self.n_graphs = len(graphs)
         self.n_nodes = -1  # Max number of nodes among all of the graphs
-        self.feature_size = len(graphs[0][0]['label'])  # Feature array size for each node
+        self.onehot = onehot
+        
+        # Find the feature size (scalar or onehot)
+        if self.onehot:
+            # Find the size of the onehot vector for the features (i.e.: the maximum value present in the dataset)
+            self.feature_size = 0  # Feature array size for each node is onehot vector
+            # min_value = 1000
+            for i in range(self.n_graphs):
+                for j in range(len(graphs[i])):
+                    for _, d in enumerate(graphs[i][j]['label']):
+                        self.feature_size = max(self.feature_size, d)
+                        # min_value = min(min_value, d)
+        else:
+            self.feature_size = len(graphs[0][0]['label'])  # Feature array size for each node
+            
+        # Find number of nodes
         for gidxs, graph in graphs.items():
             self.n_nodes = max(self.n_nodes, len(graph))
         assert self.n_nodes > 0, "Apparently,there are no nodes in these graphs"
@@ -69,7 +85,10 @@ class DatasetHelper(object):
                 for k in graphs[idx][j]['neighbors']:
                     a_train[i, j, k] = 1
                 for k, d in enumerate(graphs[idx][j]['label']):
-                    x_train[i, j, k] = float(d)
+                    if self.onehot:
+                        x_train[i, j, :] = to_onehot(d, self.feature_size, device)
+                    else:
+                        x_train[i, j, k] = float(d)
     
         # Generate PyTorch tensors for valid
         a_valid = torch.zeros((self.valid_size, self.n_nodes, self.n_nodes), dtype=torch.float, device=device)
@@ -82,7 +101,10 @@ class DatasetHelper(object):
                 for k in graphs[idx][j]['neighbors']:
                     a_valid[i, j, k] = 1
                 for k, d in enumerate(graphs[idx][j]['label']):
-                    x_valid[i, j, k] = float(d)
+                    if self.onehot:
+                        x_train[i, j, :] = to_onehot(d, self.feature_size, device)
+                    else:
+                        x_train[i, j, k] = float(d)
                     
         if normalize:
             x_train = F.normalize(x_train, p=2, dim=1)
@@ -91,3 +113,10 @@ class DatasetHelper(object):
     
         self.train = (x_train, a_train, labels_train)
         self.valid = (x_valid, a_valid, labels_valid)
+
+
+def to_onehot(x, size, device="cuda:0"):
+    t = torch.zeros(size, device=device)
+    t[x - 1] = 1 # Since the minimum value is 1, we index -1 the features because we don't need element 0
+    return t
+    

@@ -16,7 +16,7 @@ from models.graphsage import GraphSAGE
 from utils.utils import DatasetHelper
 
 SEED = 42
-NORMALIZE = False
+NORMALIZE = True
 
 def main():
     print(ARGS)
@@ -38,6 +38,8 @@ def main():
     
     gcn = GraphSAGE(feature_size, feature_size*2, device=device, normalize=normalize)
     gcn = gcn.to(device=device)
+    
+    gcn.train()
     
     x1 = x_train[0]
     a1 = a_train[0]
