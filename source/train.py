@@ -11,10 +11,10 @@ from torch.nn import functional as F
 from torchvision.utils import make_grid
 from torchvision.utils import save_image
 
-from models.model import Model
+from models.classifier import Classifier
 from models.graphsage import GraphSAGE
 from models.diffpool import DiffPool
-from utils.utils import DatasetHelper
+from utils.utils import *
 
 SEED = 42
 NORMALIZE = True
@@ -40,12 +40,12 @@ def main():
     x1 = x_train[0]
     a1 = a_train[0]
     t1 = labels_train[0]
+    t1_onehot = to_onehot_labels(t1)
     
     # Try GraphSAGE
     gcn = GraphSAGE(feature_size, feature_size*2, device=device, normalize=normalize)
     gcn = gcn.to(device=device)
     gcn.train()
-
     weights = gcn.linear.weight
     z1 = gcn(x1, a1)
     print()
@@ -54,8 +54,13 @@ def main():
     diffpool = DiffPool(feature_size, x1.size(0)//2, device=device)
     diffpool = diffpool.to(device=device)
     diffpool.train()
-    
     x1_new, a1_new = diffpool(x1, a1)
+    print()
+    
+    # Try Classifier
+    classifier = Classifier(device=device)
+    classifier = classifier.to(device=device)
+    x_final, a_final, y_final = classifier(x1, a1)
     print()
     
     

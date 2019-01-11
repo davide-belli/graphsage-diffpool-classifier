@@ -21,6 +21,7 @@ class DatasetHelper(object):
         self.train_size = -1
         self.valid_size = -1
         self.onehot = None
+        self.labels_set = None
 
 
     def read_file(self, ds_name):
@@ -42,6 +43,7 @@ class DatasetHelper(object):
     def load_dataset(self, ds_name, device="cuda:0", seed=42, normalize=True, onehot=True):
         
         graphs, labels = self.read_file(ds_name)
+        self.labels_set = set(labels)
         
         # Compute shape dimensions n_graphs, n_nodes, features_size
         self.n_graphs = len(graphs)
@@ -119,4 +121,12 @@ def to_onehot(x, size, device="cuda:0"):
     t = torch.zeros(size, device=device)
     t[x - 1] = 1 # Since the minimum value is 1, we index -1 the features because we don't need element 0
     return t
-    
+
+def to_onehot_labels(x, device="cuda:0"):
+    t = torch.zeros(2, device=device)
+    if x.item() == 1:
+        t[1] = 1
+    else:
+        t[0] = 1
+    return t
+
