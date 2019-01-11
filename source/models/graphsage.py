@@ -4,7 +4,7 @@ from torch.nn import functional as F
 
 class GraphSAGE(nn.Module):
 
-    def __init__(self, input_dim, output_dim, device="cuda:0", normalize=False):
+    def __init__(self, input_dim, output_dim, device="cuda:0", normalize=True):
         super(GraphSAGE, self).__init__()
         self.device = device
         self.normalize = normalize

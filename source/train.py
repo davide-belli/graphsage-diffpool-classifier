@@ -13,6 +13,7 @@ from torchvision.utils import save_image
 
 from models.model import Model
 from models.graphsage import GraphSAGE
+from models.diffpool import DiffPool
 from utils.utils import DatasetHelper
 
 SEED = 42
@@ -35,17 +36,26 @@ def main():
     (x_valid, a_valid, labels_valid) = dataset_helper.valid
     feature_size = dataset_helper.feature_size
     print("Imported dataset, generated train and validation splits, took: {:.3f}s".format(time.time() - start_time))
-    
-    gcn = GraphSAGE(feature_size, feature_size*2, device=device, normalize=normalize)
-    gcn = gcn.to(device=device)
-    
-    gcn.train()
-    
+
     x1 = x_train[0]
     a1 = a_train[0]
     t1 = labels_train[0]
+    
+    # Try GraphSAGE
+    gcn = GraphSAGE(feature_size, feature_size*2, device=device, normalize=normalize)
+    gcn = gcn.to(device=device)
+    gcn.train()
+
     weights = gcn.linear.weight
     z1 = gcn(x1, a1)
+    print()
+    
+    # Try DiffPool
+    diffpool = DiffPool(feature_size, x1.size(0)//2, device=device)
+    diffpool = diffpool.to(device=device)
+    diffpool.train()
+    
+    x1_new, a1_new = diffpool(x1, a1)
     print()
     
     
