@@ -11,6 +11,7 @@ class GraphSAGE(nn.Module):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.linear = nn.Linear(self.input_dim, self. output_dim)
+        self.layer_norm = nn.LayerNorm(self.output_dim)  # elementwise_affine=False
         nn.init.xavier_uniform_(self.linear.weight)
 
     def aggregate_convolutional(self, x, a):
@@ -24,6 +25,8 @@ class GraphSAGE(nn.Module):
         h = F.relu(self.linear(h_hat))
         # h = self.linear(h_hat)
         if self.normalize:
-            h = F.normalize(h, p=2, dim=1)  # Normalize edge embeddings
+            # h = F.normalize(h, p=2, dim=1)  # Normalize edge embeddings
+            h = self.layer_norm(h)  # Normalize layerwise (mean=0, std=1)
+            # print()
         
         return h
