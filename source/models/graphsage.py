@@ -15,7 +15,8 @@ class GraphSAGE(nn.Module):
         nn.init.xavier_uniform_(self.linear.weight)
 
     def aggregate_convolutional(self, x, a):
-        a += torch.eye(a.shape[0], dtype=torch.float, device=self.device)
+        eye = torch.eye(a.shape[0], dtype=torch.float, device=self.device)
+        a = a + eye
         h_hat = a @ x
         
         return h_hat
