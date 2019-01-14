@@ -3,6 +3,8 @@ import os.path
 import errno
 import pickle
 
+import matplotlib.pyplot as plt
+
 import numpy as np
 import torch
 from torch.nn import functional as F
@@ -22,6 +24,7 @@ class DatasetHelper(object):
         self.valid_size = -1
         self.onehot = None
         self.labels_set = None
+        self.TRAIN_RATIO = 0.8
 
 
     def read_file(self, ds_name):
@@ -38,6 +41,13 @@ class DatasetHelper(object):
         labels = np.array(data["labels"], dtype=np.float)
         
         return graphs, labels
+    
+    def normalize_label(self, l):
+        # from -1,1 to 0,1
+        n = (l + 1) // 2
+        if n != 0 and n != 1:
+            raise ValueError
+        return n
     
 
     def load_dataset(self, ds_name, device="cuda:0", seed=42, normalize=True, onehot=True):
@@ -71,7 +81,7 @@ class DatasetHelper(object):
         # Generate train and valid splits
         torch.manual_seed(seed)
         shuffled_idx = torch.randperm(self.n_graphs)
-        self.train_size = int(self.n_graphs * 0.8)
+        self.train_size = int(self.n_graphs * self.TRAIN_RATIO)
         self.valid_size = self.n_graphs - self.train_size
         train_idx = shuffled_idx[:self.train_size]
         valid_idx = shuffled_idx[self.train_size:]
@@ -79,10 +89,10 @@ class DatasetHelper(object):
         # Generate PyTorch tensors for train
         a_train = torch.zeros((self.train_size, self.n_nodes, self.n_nodes), dtype=torch.float, device=device)
         x_train = torch.zeros((self.train_size, self.n_nodes, self.feature_size), dtype=torch.float, device=device)
-        labels_train = torch.FloatTensor(self.train_size, device=device)
-        for i in range(self.valid_size):
+        labels_train = torch.LongTensor(self.train_size).to(device=device)
+        for i in range(self.train_size):
             idx = train_idx[i].item()
-            labels_train[i] = labels[idx]
+            labels_train[i] = self.normalize_label(labels[idx])
             for j in range(len(graphs[idx])):
                 for k in graphs[idx][j]['neighbors']:
                     a_train[i, j, k] = 1
@@ -95,24 +105,23 @@ class DatasetHelper(object):
         # Generate PyTorch tensors for valid
         a_valid = torch.zeros((self.valid_size, self.n_nodes, self.n_nodes), dtype=torch.float, device=device)
         x_valid = torch.zeros((self.valid_size, self.n_nodes, self.feature_size), dtype=torch.float, device=device)
-        labels_valid = torch.FloatTensor(self.valid_size, device=device)
+        labels_valid = torch.LongTensor(self.valid_size).to(device=device)
         for i in range(self.valid_size):
             idx = valid_idx[i].item()
-            labels_valid[i] = labels[idx]
+            labels_valid[i] = self.normalize_label(labels[idx])
             for j in range(len(graphs[idx])):
                 for k in graphs[idx][j]['neighbors']:
                     a_valid[i, j, k] = 1
                 for k, d in enumerate(graphs[idx][j]['label']):
                     if self.onehot:
-                        x_train[i, j, :] = to_onehot(d, self.feature_size, device)
+                        x_valid[i, j, :] = to_onehot(d, self.feature_size, device)
                     else:
-                        x_train[i, j, k] = float(d)
+                        x_valid[i, j, k] = float(d)
                     
         if normalize:
             x_train = F.normalize(x_train, p=2, dim=1)
             x_valid = F.normalize(x_valid, p=2, dim=1)
         
-    
         self.train = (x_train, a_train, labels_train)
         self.valid = (x_valid, a_valid, labels_valid)
 
@@ -130,3 +139,14 @@ def to_onehot_labels(x, device="cuda:0"):
         t[0] = 1
     return t
 
+def generate_plot(train, valid, title="Insert Title here"):
+    plt.figure()
+    plt.plot(valid, label="Validation")
+    plt.plot(train, label="Training")
+    plt.xlabel("Epoch")
+    # plt.ylabel()
+    plt.legend()
+    plt.title(title)
+    # plt.show()
+    plt.savefig("./"+title+".svg", format='svg', dpi=1000)
+    return
