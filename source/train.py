@@ -17,7 +17,7 @@ from models.graphsage import GraphSAGE
 from models.diffpool import DiffPool
 from utils.utils import *
 
-SEED = 422
+SEED = 42
 NORMALIZE = True
 
 def compute_accuracy(pred, target, device="cuda:0"):
