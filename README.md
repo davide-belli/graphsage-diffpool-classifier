@@ -53,3 +53,29 @@
 - - In GraphSAGE, how do we work in case of one-dimensional features? 
  	e.g. the output will have feature dimensions zero, or shall we increase it? If not, with normalization all the values will be 1, since they are scalars (shall we normalize also the feature in input in this case?). Also, if the weights are initialized as negative all the activations after a relu will be zero after the first forward
 - - What about zero-dimensional ones?
+
+## Papers Reading
+### 01/01/2019
+
+- Hierarchical Bipartite GCNs
+- Adaptive Skip Intervals: Temporal Abstraction for Recurrent Dynamical Models
+- Variational Graph Auto-Encoders
+- (PARTIALLY) A Comprehensive Survey on Graph Neural Networks
+- (PARTIALLY) Graph Neural Networks: A Review of Methods and Applications 
+- Compositional Imitation Learning: Explaining and executing one task at a time
+
+## DiffPool
+### 11/01/2019
+
+- added LayerNorm layer for GraphSAGE
+- added one-hot encoding for scalar features
+- implemented DiffPool
+- designed and implemented a simple graph classifier with convolution and pooling layers
+
+## Training Code
+### 14/01/2019
+
+- fixed bugs in dataset generation and GraphSAGE (inplace operation)
+- added code for training
+- added code for plotting
+- executed training and generated accuracy/loss plots
